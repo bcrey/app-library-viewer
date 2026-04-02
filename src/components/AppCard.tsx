@@ -12,14 +12,14 @@ export default function AppCard({ link }: AppCardProps) {
       href={link.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex flex-col items-center gap-3 rounded-2xl bg-gray-800/50 p-6
+      className="group relative flex aspect-[2/1] items-center gap-4 rounded-2xl bg-gray-800/50 px-5
         ring-1 ring-white/[0.08] backdrop-blur-sm
         transition-all duration-300 ease-out
-        hover:scale-[1.06] hover:bg-gray-800/80 hover:ring-white/20
+        hover:scale-[1.04] hover:bg-gray-800/80 hover:ring-white/20
         hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)]
-        active:scale-[1.02]"
+        active:scale-[1.01]"
     >
-      <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-gray-700/50 p-2 transition-all duration-300 group-hover:bg-gray-700/80 group-hover:shadow-lg">
+      <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-700/50 p-2 transition-all duration-300 group-hover:bg-gray-700/80 group-hover:shadow-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={link.iconUrl}
@@ -39,7 +39,7 @@ export default function AppCard({ link }: AppCardProps) {
           }}
         />
       </div>
-      <span className="w-full truncate text-center text-sm font-medium text-gray-300 transition-colors duration-300 group-hover:text-white">
+      <span className="min-w-0 truncate text-base font-semibold text-gray-300 transition-colors duration-300 group-hover:text-white">
         {link.title}
       </span>
     </a>

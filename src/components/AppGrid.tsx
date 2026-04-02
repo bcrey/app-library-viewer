@@ -18,7 +18,7 @@ export default function AppGrid({ links }: AppGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
       {links.map((link) => (
         <AppCard key={link.id} link={link} />
       ))}
