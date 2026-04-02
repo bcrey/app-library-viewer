@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "App Library",
   description: "Your personal app launcher",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
