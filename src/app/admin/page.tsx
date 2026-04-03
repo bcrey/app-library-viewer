@@ -7,6 +7,21 @@ import { AppLink } from "@/types";
 import { appService } from "@/lib/appService";
 import AdminLinkForm from "@/components/AdminLinkForm";
 import AdminLinkRow from "@/components/AdminLinkRow";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [password, setPassword] = useState("");
@@ -161,6 +176,22 @@ export default function AdminPage() {
     await refreshLinks();
   }
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.findIndex((l) => l.id === active.id);
+    const newIndex = links.findIndex((l) => l.id === over.id);
+    const reordered = arrayMove(links, oldIndex, newIndex);
+    setLinks(reordered);
+    await appService.reorderLinks(reordered.map((l) => l.id));
+  }
+
   const [copied, setCopied] = useState(false);
   const [importJson, setImportJson] = useState("");
   const [importError, setImportError] = useState("");
@@ -269,16 +300,27 @@ export default function AdminPage() {
             No apps added yet. Add a URL above to get started.
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {links.map((link) => (
-              <AdminLinkRow
-                key={link.id}
-                link={link}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={links.map((l) => l.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="flex flex-col gap-2">
+                {links.map((link) => (
+                  <AdminLinkRow
+                    key={link.id}
+                    link={link}
+                    onUpdate={handleUpdate}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 

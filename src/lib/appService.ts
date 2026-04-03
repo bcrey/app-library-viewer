@@ -90,6 +90,17 @@ class SupabaseAppService {
 
     if (error) throw error;
   }
+
+  async reorderLinks(orderedIds: string[]): Promise<void> {
+    const supabase = getSupabase();
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase
+        .from("app_links")
+        .update({ sort_order: i })
+        .eq("id", orderedIds[i]);
+      if (error) throw error;
+    }
+  }
 }
 
 export const appService = new SupabaseAppService();

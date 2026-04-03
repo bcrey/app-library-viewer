@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, ExternalLink, Check, X } from "lucide-react";
+import { Trash2, ExternalLink, Check, X, GripVertical } from "lucide-react";
 import { AppLink } from "@/types";
 import ImageUpload from "./ImageUpload";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface AdminLinkRowProps {
   link: AppLink;
@@ -12,6 +14,14 @@ interface AdminLinkRowProps {
 }
 
 export default function AdminLinkRow({ link, onUpdate, onDelete }: AdminLinkRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(link.title);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -37,8 +47,27 @@ export default function AdminLinkRow({ link, onUpdate, onDelete }: AdminLinkRowP
     onUpdate(link.id, { iconUrl: base64, customIcon: true });
   }
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-3 ring-1 ring-white/[0.06]">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-3 ring-1 ring-white/[0.06] ${
+        isDragging ? "relative z-50 opacity-80 shadow-2xl shadow-black/50 ring-indigo-500/30" : ""
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 cursor-grab touch-none text-gray-600 hover:text-gray-400 active:cursor-grabbing"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-5 w-5" />
+      </button>
       <ImageUpload currentIcon={link.iconUrl} onUpload={handleUpload} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
