@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, Copy, Check, ClipboardPaste } from "lucide-react";
 import Link from "next/link";
 import { AppLink } from "@/types";
 import { appService } from "@/lib/appService";
@@ -161,6 +161,68 @@ export default function AdminPage() {
     await refreshLinks();
   }
 
+  const [copied, setCopied] = useState(false);
+  const [importJson, setImportJson] = useState("");
+  const [importError, setImportError] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState("");
+
+  function getExportJson() {
+    return JSON.stringify(
+      links.map(({ url, title, iconUrl, customIcon, sortOrder }) => ({
+        url,
+        title,
+        iconUrl,
+        customIcon,
+        sortOrder,
+      })),
+      null,
+      2
+    );
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(getExportJson());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleImport() {
+    setImportError("");
+    setImportSuccess("");
+    setImporting(true);
+    try {
+      const parsed = JSON.parse(importJson);
+      if (!Array.isArray(parsed)) {
+        setImportError("JSON must be an array of apps");
+        setImporting(false);
+        return;
+      }
+      let added = 0;
+      for (const item of parsed) {
+        if (!item.url || !item.title) {
+          continue;
+        }
+        await appService.addLink({
+          url: item.url,
+          title: item.title,
+          iconUrl:
+            item.iconUrl ||
+            `https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=64`,
+        });
+        added++;
+      }
+      await refreshLinks();
+      setImportJson("");
+      setImportSuccess(`Imported ${added} app${added !== 1 ? "s" : ""}`);
+      setTimeout(() => setImportSuccess(""), 3000);
+    } catch {
+      setImportError("Invalid JSON");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   if (checkingAuth) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -218,6 +280,80 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="mt-10 border-t border-white/10 pt-8">
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-gray-400">
+          Export / Import
+        </h2>
+
+        <div className="space-y-4">
+          {/* Export */}
+          <div className="rounded-lg bg-gray-800/40 p-4 ring-1 ring-white/10">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm text-gray-300">
+                Copy all apps as JSON
+              </p>
+              <button
+                onClick={handleCopy}
+                disabled={links.length === 0}
+                className="flex items-center gap-1.5 rounded-md bg-gray-700/60 px-3 py-1.5 text-xs font-medium text-gray-200 ring-1 ring-white/10 transition-all hover:bg-gray-600/80 hover:text-white disabled:opacity-40"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-green-400" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy JSON
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="max-h-48 overflow-auto rounded-md bg-gray-900/80 p-3 text-xs text-gray-400">
+              {links.length > 0
+                ? getExportJson()
+                : "No apps to export"}
+            </pre>
+          </div>
+
+          {/* Import */}
+          <div className="rounded-lg bg-gray-800/40 p-4 ring-1 ring-white/10">
+            <p className="mb-2 text-sm text-gray-300">
+              Paste JSON to import apps
+            </p>
+            <textarea
+              value={importJson}
+              onChange={(e) => {
+                setImportJson(e.target.value);
+                setImportError("");
+              }}
+              placeholder='Paste JSON array here...'
+              rows={4}
+              className="w-full rounded-md bg-gray-900/80 px-3 py-2 text-xs text-gray-300 placeholder-gray-600 ring-1 ring-white/10 transition-all focus:outline-none focus:ring-indigo-500/50"
+            />
+            {importError && (
+              <p className="mt-1 text-xs text-red-400">{importError}</p>
+            )}
+            {importSuccess && (
+              <p className="mt-1 text-xs text-green-400">{importSuccess}</p>
+            )}
+            <button
+              onClick={handleImport}
+              disabled={!importJson.trim() || importing}
+              className="mt-2 flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-indigo-500 disabled:opacity-40"
+            >
+              {importing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ClipboardPaste className="h-3.5 w-3.5" />
+              )}
+              Import Apps
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   );
