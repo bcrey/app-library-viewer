@@ -7,6 +7,8 @@ interface DbRow {
   title: string;
   icon_url: string;
   custom_icon: boolean;
+  description: string | null;
+  what_learned: string | null;
   sort_order: number;
   created_at: string;
 }
@@ -18,6 +20,8 @@ function toAppLink(row: DbRow): AppLink {
     title: row.title,
     iconUrl: row.icon_url,
     customIcon: row.custom_icon,
+    description: row.description ?? undefined,
+    whatLearned: row.what_learned ?? undefined,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
   };
@@ -35,7 +39,8 @@ class SupabaseAppService {
   }
 
   async addLink(
-    input: Pick<AppLink, "url" | "title" | "iconUrl">
+    input: Pick<AppLink, "url" | "title" | "iconUrl"> &
+      Partial<Pick<AppLink, "description" | "whatLearned">>
   ): Promise<AppLink> {
     // Get max sort_order
     const { data: existing } = await getSupabase()
@@ -53,6 +58,8 @@ class SupabaseAppService {
         title: input.title,
         icon_url: input.iconUrl,
         custom_icon: false,
+        description: input.description ?? null,
+        what_learned: input.whatLearned ?? null,
         sort_order: maxOrder + 1,
       })
       .select()
@@ -64,12 +71,18 @@ class SupabaseAppService {
 
   async updateLink(
     id: string,
-    updates: Partial<Pick<AppLink, "title" | "iconUrl" | "customIcon">>
+    updates: Partial<
+      Pick<AppLink, "title" | "iconUrl" | "customIcon" | "description" | "whatLearned">
+    >
   ): Promise<AppLink> {
     const dbUpdates: Record<string, unknown> = {};
     if (updates.title !== undefined) dbUpdates.title = updates.title;
     if (updates.iconUrl !== undefined) dbUpdates.icon_url = updates.iconUrl;
     if (updates.customIcon !== undefined) dbUpdates.custom_icon = updates.customIcon;
+    if (updates.description !== undefined)
+      dbUpdates.description = updates.description || null;
+    if (updates.whatLearned !== undefined)
+      dbUpdates.what_learned = updates.whatLearned || null;
 
     const { data, error } = await getSupabase()
       .from("app_links")

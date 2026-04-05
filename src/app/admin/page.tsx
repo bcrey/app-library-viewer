@@ -165,7 +165,9 @@ export default function AdminPage() {
 
   async function handleUpdate(
     id: string,
-    updates: Partial<Pick<AppLink, "title" | "iconUrl" | "customIcon">>
+    updates: Partial<
+      Pick<AppLink, "title" | "iconUrl" | "customIcon" | "description" | "whatLearned">
+    >
   ) {
     await appService.updateLink(id, updates);
     await refreshLinks();
@@ -200,13 +202,17 @@ export default function AdminPage() {
 
   function getExportJson() {
     return JSON.stringify(
-      links.map(({ url, title, iconUrl, customIcon, sortOrder }) => ({
-        url,
-        title,
-        iconUrl,
-        customIcon,
-        sortOrder,
-      })),
+      links.map(
+        ({ url, title, iconUrl, customIcon, description, whatLearned, sortOrder }) => ({
+          url,
+          title,
+          iconUrl,
+          customIcon,
+          description,
+          whatLearned,
+          sortOrder,
+        })
+      ),
       null,
       2
     );
@@ -240,6 +246,10 @@ export default function AdminPage() {
           iconUrl:
             item.iconUrl ||
             `https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=64`,
+          description:
+            typeof item.description === "string" ? item.description : undefined,
+          whatLearned:
+            typeof item.whatLearned === "string" ? item.whatLearned : undefined,
         });
         added++;
       }

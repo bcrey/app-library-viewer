@@ -4,6 +4,8 @@ export interface AppLink {
   title: string;
   iconUrl: string;
   customIcon: boolean;
+  description?: string;
+  whatLearned?: string;
   createdAt: string;
   sortOrder: number;
 }
