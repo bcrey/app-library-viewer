@@ -131,7 +131,7 @@ export default function AdminPage() {
 
   async function handleAdd(url: string) {
     try {
-      const res = await fetch("/api/fetch-meta", {
+      const metaRes = await fetch("/api/fetch-meta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
@@ -140,8 +140,8 @@ export default function AdminPage() {
       let title: string;
       let iconUrl: string;
 
-      if (res.ok) {
-        const data = await res.json();
+      if (metaRes.ok) {
+        const data = await metaRes.json();
         title = data.title;
         iconUrl = data.iconUrl;
       } else {
@@ -150,14 +150,22 @@ export default function AdminPage() {
         iconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
       }
 
-      await appService.addLink({ url, title, iconUrl });
+      await fetch("/api/apps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, title, iconUrl }),
+      });
       await refreshLinks();
     } catch {
       const hostname = new URL(url).hostname.replace("www.", "");
-      await appService.addLink({
-        url,
-        title: hostname,
-        iconUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+      await fetch("/api/apps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          title: hostname,
+          iconUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+        }),
       });
       await refreshLinks();
     }
@@ -169,12 +177,16 @@ export default function AdminPage() {
       Pick<AppLink, "title" | "iconUrl" | "customIcon" | "description" | "whatLearned">
     >
   ) {
-    await appService.updateLink(id, updates);
+    await fetch(`/api/apps/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
     await refreshLinks();
   }
 
   async function handleDelete(id: string) {
-    await appService.deleteLink(id);
+    await fetch(`/api/apps/${id}`, { method: "DELETE" });
     await refreshLinks();
   }
 
@@ -191,7 +203,11 @@ export default function AdminPage() {
     const newIndex = links.findIndex((l) => l.id === over.id);
     const reordered = arrayMove(links, oldIndex, newIndex);
     setLinks(reordered);
-    await appService.reorderLinks(reordered.map((l) => l.id));
+    await fetch("/api/apps/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedIds: reordered.map((l) => l.id) }),
+    });
   }
 
   const [copied, setCopied] = useState(false);
@@ -240,16 +256,20 @@ export default function AdminPage() {
         if (!item.url || !item.title) {
           continue;
         }
-        await appService.addLink({
-          url: item.url,
-          title: item.title,
-          iconUrl:
-            item.iconUrl ||
-            `https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=64`,
-          description:
-            typeof item.description === "string" ? item.description : undefined,
-          whatLearned:
-            typeof item.whatLearned === "string" ? item.whatLearned : undefined,
+        await fetch("/api/apps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: item.url,
+            title: item.title,
+            iconUrl:
+              item.iconUrl ||
+              `https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=64`,
+            description:
+              typeof item.description === "string" ? item.description : undefined,
+            whatLearned:
+              typeof item.whatLearned === "string" ? item.whatLearned : undefined,
+          }),
         });
         added++;
       }

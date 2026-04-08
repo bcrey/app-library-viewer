@@ -5,7 +5,6 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { AppLink } from "@/types";
 import { appService } from "@/lib/appService";
-import { seedIfEmpty } from "@/lib/seedData";
 import AppGrid from "@/components/AppGrid";
 
 export default function HomePage() {
@@ -14,7 +13,7 @@ export default function HomePage() {
 
   useEffect(() => {
     async function init() {
-      await seedIfEmpty();
+      await fetch("/api/apps/seed", { method: "POST" });
       const data = await appService.getLinks();
       setLinks(data);
       setLoading(false);

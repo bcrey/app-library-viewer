@@ -10,8 +10,16 @@ create table app_links (
   created_at timestamptz default now()
 );
 
--- No RLS needed — this is a single-user public app with no auth
-alter table app_links disable row level security;
+-- Enable Row-Level Security
+alter table app_links enable row level security;
+
+-- Allow anyone to read (public homepage)
+create policy "Public read access"
+  on app_links for select
+  using (true);
+
+-- Only the service_role key (used by server API routes) can write.
+-- No insert/update/delete policies for anon = writes are blocked for anon.
 
 -- Migration for existing installations (safe to run repeatedly)
 alter table app_links add column if not exists description text;
